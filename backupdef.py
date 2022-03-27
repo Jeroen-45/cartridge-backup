@@ -1,6 +1,6 @@
 import pickle
 
-from entries import *
+from entries import FolderEntry
 from util import sanitize_filename
 
 
