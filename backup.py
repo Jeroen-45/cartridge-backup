@@ -1,4 +1,5 @@
 import argparse
+import logging as log
 
 from backupdef import BackupDef
 from entries import FolderEntry
@@ -15,5 +16,13 @@ if __name__ == '__main__':
                                                  "multiple, smaller destination drives(cartridges).")
     parser.add_argument("source", help="The source directory")
     parser.add_argument("destination", help="The destination directory")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
     args = parser.parse_args()
+
+    if args.verbose:
+        log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
+        log.info("Verbose output.")
+    else:
+        log.basicConfig(format="%(levelname)s: %(message)s")
+
     backup(args.source, args.destination)

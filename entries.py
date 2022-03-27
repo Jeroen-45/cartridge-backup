@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import logging as log
 
 
 class FileEntry:
@@ -23,7 +24,7 @@ class FolderEntry:
         Creates a FolderEntry containing the complete structure of
         actual folders and files present under the given path.
         """
-        print(f"Indexing {path_str}")
+        log.info(f"Indexing {path_str}")
         path = Path(path_str)
         new_folder = FolderEntry(path.parts[-1])
         for entry in os.scandir(path_str):
