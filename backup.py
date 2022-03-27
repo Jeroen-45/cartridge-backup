@@ -1,14 +1,27 @@
 import argparse
 import logging as log
+import os
+from pathlib import Path
 
 from backupdef import BackupDef
 from entries import FolderEntry
+from util import sanitizeFilename
 
 
 def backup(source: str, destination: str):
     folder = FolderEntry.fromFolder(source)
-    backupdef = BackupDef(folder)
-    backupdef.saveToFile()
+    new_backupdef = BackupDef(folder)
+
+    backupdef_path = os.path.join(destination, f"{sanitizeFilename(folder.name)}.cbdef")
+    if Path(backupdef_path).is_file():
+        current_backupdef = BackupDef.loadFromFile(backupdef_path)
+    else:
+        current_backupdef = BackupDef(FolderEntry(Path(source).parts[-1]))
+
+    delta_backupdef = BackupDef.delta(new_backupdef, current_backupdef)
+    # print(delta_backupdef)
+
+    new_backupdef.saveToFile(backupdef_path)
 
 
 if __name__ == '__main__':
@@ -21,7 +34,6 @@ if __name__ == '__main__':
 
     if args.verbose:
         log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
-        log.info("Verbose output.")
     else:
         log.basicConfig(format="%(levelname)s: %(message)s")
 
