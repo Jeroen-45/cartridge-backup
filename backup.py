@@ -2,6 +2,7 @@ import argparse
 import logging as log
 import os
 from pathlib import Path
+import errno
 
 from backupdef import BackupDef
 from entries import FolderEntry
@@ -19,9 +20,28 @@ def backup(source: str, destination: str):
         current_backupdef = BackupDef(FolderEntry(Path(source).parts[-1]))
 
     delta_backupdef = BackupDef.delta(new_backupdef, current_backupdef)
-    # print(delta_backupdef)
 
-    new_backupdef.saveToFile(backupdef_path)
+    # Copy over files until the disk is filled up
+    while delta_backupdef.folder.contents or delta_backupdef.folder.deleted:
+        # Before starting to copy over files, store the complete new backupdef to the destination.
+        # This is both for fallback and for reserving space for the backupdef
+        new_backupdef.saveToFile(backupdef_path)
+
+        # Copy the files
+        try:
+            delta_backupdef.processDelta(current_backupdef, source, destination)
+        except Exception as e:
+            if e.errno != errno.ENOSPC:
+                raise
+            else:
+                # Disk full, save backupdef of files copied up to this point and ask for new destination
+                current_backupdef.saveToFile(backupdef_path)
+                dest_input = input(f"Cartridge full, insert next one and enter new path ({destination}): ")
+                if dest_input != "":
+                    destination = dest_input
+
+    # Save backupdef of (presumably all) files copied up to this point
+    current_backupdef.saveToFile(backupdef_path)
 
 
 if __name__ == '__main__':

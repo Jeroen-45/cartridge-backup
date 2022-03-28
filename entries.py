@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import logging as log
 from enum import Enum
+import shutil
 
 
 class EntryType(Enum):
@@ -79,6 +80,39 @@ class FolderEntry:
                     delta_folder_entry.removeFile(entry.name)
 
         return delta_folder_entry
+
+    def processDelta(self, older_folder_entry: 'FolderEntry', source: str, destination: str):
+        """
+        Actually copy over the data on disk from source to destination.
+        At the same time, move entries from this(the delta) entry to the older folder entry.
+        """
+        # Transfer deletions
+        older_folder_entry.deleted = {**older_folder_entry.deleted, **self.deleted}
+
+        # Determine current path
+        current_dest_path = os.path.join(destination, self.name)
+
+        # Create current folder at destination
+        log.info(f"Creating folder {current_dest_path}")
+        if not os.path.exists(current_dest_path):
+            os.makedirs(current_dest_path)
+
+        # Transfer additions/modifications
+        for entry in list(self.contents.values()):
+            if type(entry) == FolderEntry:
+                new_folder_entry = FolderEntry(entry.name)
+                older_folder_entry.addFolder(new_folder_entry)
+
+                entry.processDelta(new_folder_entry, os.path.join(source, entry.name), current_dest_path)
+
+                self.contents.pop(entry.name)
+            else:
+                file_src_path = os.path.join(source, entry.name)
+
+                log.info(f"Copying {file_src_path} to {current_dest_path}")
+                shutil.copy2(file_src_path, current_dest_path)
+
+                older_folder_entry.addFile(self.contents.pop(entry.name))
 
     def addFolder(self, folder: 'FolderEntry'):
         self.contents[folder.name] = folder

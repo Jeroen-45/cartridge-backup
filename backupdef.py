@@ -10,6 +10,10 @@ class BackupDef:
     def __str__(self) -> str:
         return str(self.folder)
 
+    @property
+    def fileSize(self) -> int:
+        return len(pickle.dumps(self, protocol=pickle.HIGHEST_PROTOCOL))
+
     def saveToFile(self, path: str):
         with open(path, 'wb') as pkl_file:
             pickle.dump(self, pkl_file, protocol=pickle.HIGHEST_PROTOCOL)
@@ -24,3 +28,6 @@ class BackupDef:
         Returns a BackupDef containing only the changes.
         """
         return BackupDef(self.folder.delta(older_def.folder))
+
+    def processDelta(self, older_def: 'BackupDef', source: str, destination: str):
+        self.folder.processDelta(older_def.folder, source, destination)
