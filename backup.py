@@ -1,3 +1,4 @@
+import signal
 import argparse
 import logging as log
 import os
@@ -31,10 +32,17 @@ def backup(source: str, destination: str):
         # Copy the files
         try:
             delta_backupdef.processDelta(current_backupdef, source, destination)
+        except KeyboardInterrupt:
+            # Script was ended by ctrl-c, save backupdef and exit
+            current_backupdef.saveToFile(backupdef_path)
+            print("The copying was interrupted, the progress has been saved.")
+            exit()
         except Exception as e:
             if e.errno != errno.ENOSPC:
                 # Copying error, save backupdef, then re-raise error
                 current_backupdef.saveToFile(backupdef_path)
+                print("The copying was interrupted by an error. "
+                      "The progress has been saved, the details are below:")
                 raise
             else:
                 # Disk full, save backupdef of files copied up to this point and ask for new destination
@@ -48,6 +56,8 @@ def backup(source: str, destination: str):
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+
     parser = argparse.ArgumentParser(description="Perform an incremental backup to"
                                                  "multiple, smaller destination drives(cartridges).")
     parser.add_argument("source", help="The source directory")
