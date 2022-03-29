@@ -115,6 +115,34 @@ class FolderEntry:
 
                 older_folder_entry.addFile(self.contents.pop(entry.name))
 
+    def processDeletions(self, destination: str, dry_run: bool = True):
+        """
+        Execute all deletions on the destination folder. When dry_run is enabled,
+        print the to-be-deleted files and folders instead of actually deleting them.
+        """
+        log.info(f"Processing deletions in {destination} - {'Dry run' if dry_run else 'Live run'}")
+
+        # Process deletions in this folder
+        for name, entry_type in self.deleted.items():
+            delete_path = os.path.join(destination, name)
+            if entry_type == EntryType.FOLDER:
+                if (dry_run):
+                    print(f"Delete folder {delete_path}")
+                else:
+                    log.info(f"Deleting folder {delete_path}")
+                    shutil.rmtree(delete_path)
+            else:
+                if (dry_run):
+                    print(f"Delete file   {delete_path}")
+                else:
+                    log.info(f"Deleting file    {delete_path}")
+                    os.remove(delete_path)
+
+        # Recurse into all deeper folders
+        for entry in self.contents.values():
+            if type(entry) == FolderEntry:
+                entry.processDeletions(os.path.join(destination, entry.name), dry_run)
+
     def addFolder(self, folder: 'FolderEntry'):
         self.contents[folder.name] = folder
         self.deleted.pop(folder.name, None)
