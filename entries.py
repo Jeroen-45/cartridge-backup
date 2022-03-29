@@ -3,6 +3,7 @@ from pathlib import Path
 import logging as log
 from enum import Enum
 import shutil
+import stat
 
 
 class EntryType(Enum):
@@ -111,7 +112,14 @@ class FolderEntry:
                 file_src_path = os.path.join(source, entry.name)
 
                 log.info(f"Copying {file_src_path} to {current_dest_path}")
-                shutil.copy2(file_src_path, current_dest_path)
+                try:
+                    shutil.copy2(file_src_path, current_dest_path)
+                except PermissionError:
+                    # The file currently present in the backup is probably read-only,
+                    # set write permissions and try one more time
+                    # (copy2 will put the read-only back when copying the stats)
+                    os.chmod(os.path.join(current_dest_path, entry.name), stat.S_IWRITE)
+                    shutil.copy2(file_src_path, current_dest_path)
 
                 older_folder_entry.addFile(self.contents.pop(entry.name))
 
