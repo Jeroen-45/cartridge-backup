@@ -11,13 +11,14 @@ from util import sanitizeFilename
 
 def backup(source: str, destination: str):
     folder = FolderEntry.fromFolder(source)
+    folder.name = sanitizeFilename(folder.name)
     new_backupdef = BackupDef(folder)
 
-    backupdef_path = os.path.join(destination, f"{sanitizeFilename(folder.name)}.cbdef")
+    backupdef_path = os.path.join(destination, f"{folder.name}.cbdef")
     if Path(backupdef_path).is_file():
         current_backupdef = BackupDef.loadFromFile(backupdef_path)
     else:
-        current_backupdef = BackupDef(FolderEntry(Path(source).parts[-1]))
+        current_backupdef = BackupDef(FolderEntry(folder.name))
 
     delta_backupdef = BackupDef.delta(new_backupdef, current_backupdef)
 
@@ -32,6 +33,8 @@ def backup(source: str, destination: str):
             delta_backupdef.processDelta(current_backupdef, source, destination)
         except Exception as e:
             if e.errno != errno.ENOSPC:
+                # Copying error, save backupdef, then re-raise error
+                current_backupdef.saveToFile(backupdef_path)
                 raise
             else:
                 # Disk full, save backupdef of files copied up to this point and ask for new destination
@@ -56,5 +59,7 @@ if __name__ == '__main__':
         log.basicConfig(format="%(levelname)s: %(message)s", level=log.DEBUG)
     else:
         log.basicConfig(format="%(levelname)s: %(message)s")
+
+    log.info(f"Running with source {args.source} and destination {args.destination}")
 
     backup(args.source, args.destination)
