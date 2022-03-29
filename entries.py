@@ -88,6 +88,7 @@ class FolderEntry:
         """
         # Transfer deletions
         older_folder_entry.deleted = {**older_folder_entry.deleted, **self.deleted}
+        self.deleted = {}
 
         # Determine current path
         current_dest_path = os.path.join(destination, self.name)
