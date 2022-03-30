@@ -4,6 +4,7 @@ import logging as log
 import os
 from pathlib import Path
 import errno
+from alive_progress import alive_bar
 
 from backupdef import BackupDef
 from entries import FolderEntry
@@ -24,32 +25,34 @@ def backup(source: str, destination: str):
     delta_backupdef = BackupDef.delta(new_backupdef, current_backupdef)
 
     # Copy over files until the disk is filled up
-    while delta_backupdef.folder.contents or delta_backupdef.folder.deleted:
-        # Before starting to copy over files, store the complete new backupdef to the destination.
-        # This is both for fallback and for reserving space for the backupdef
-        new_backupdef.saveToFile(backupdef_path)
+    with alive_bar(delta_backupdef.folder.size) as bar:
+        while delta_backupdef.folder.contents or delta_backupdef.folder.deleted:
+            # Before starting to copy over files, store the complete new backupdef to the destination.
+            # This is both for fallback and for reserving space for the backupdef
+            new_backupdef.saveToFile(backupdef_path)
 
-        # Copy the files
-        try:
-            delta_backupdef.processDelta(current_backupdef, source, destination)
-        except KeyboardInterrupt:
-            # Script was ended by ctrl-c, save backupdef and exit
-            current_backupdef.saveToFile(backupdef_path)
-            print("The copying was interrupted, the progress has been saved.")
-            exit()
-        except Exception as e:
-            if e.errno != errno.ENOSPC:
-                # Copying error, save backupdef, then re-raise error
+            # Copy the files
+            try:
+                delta_backupdef.processDelta(current_backupdef, source, destination, bar)
+            except KeyboardInterrupt:
+                # Script was ended by ctrl-c, save backupdef and exit
                 current_backupdef.saveToFile(backupdef_path)
-                print("The copying was interrupted by an error. "
-                      "The progress has been saved, the details are below:")
-                raise
-            else:
-                # Disk full, save backupdef of files copied up to this point and ask for new destination
-                current_backupdef.saveToFile(backupdef_path)
-                dest_input = input(f"Cartridge full, insert next one and enter new path ({destination}): ")
-                if dest_input != "":
-                    destination = dest_input
+                print("The copying was interrupted, the progress has been saved.")
+                exit()
+            except Exception as e:
+                if e.errno != errno.ENOSPC:
+                    # Copying error, save backupdef, then re-raise error
+                    current_backupdef.saveToFile(backupdef_path)
+                    print("The copying was interrupted by an error. "
+                          "The progress has been saved, the details are below:")
+                    raise
+                else:
+                    # Disk full, save backupdef of files copied up to this point and ask for new destination
+                    with bar.pause():
+                        current_backupdef.saveToFile(backupdef_path)
+                        dest_input = input(f"Cartridge full, insert next one and enter new path ({destination}): ")
+                        if dest_input != "":
+                            destination = dest_input
 
     # Save backupdef of (presumably all) files copied up to this point
     current_backupdef.saveToFile(backupdef_path)

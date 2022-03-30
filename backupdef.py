@@ -29,5 +29,5 @@ class BackupDef:
         """
         return BackupDef(self.folder.delta(older_def.folder))
 
-    def processDelta(self, older_def: 'BackupDef', source: str, destination: str):
-        self.folder.processDelta(older_def.folder, source, destination)
+    def processDelta(self, older_def: 'BackupDef', source: str, destination: str, bar=None):
+        self.folder.processDelta(older_def.folder, source, destination, bar)

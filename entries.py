@@ -12,9 +12,10 @@ class EntryType(Enum):
 
 
 class FileEntry:
-    def __init__(self, name: str, time: int):
+    def __init__(self, name: str, time: int, size: int):
         self.name = name
         self.time = time
+        self.size = size
 
     def __str__(self) -> str:
         return self.name
@@ -31,6 +32,10 @@ class FolderEntry:
                 f"Contents: {[str(entry) for entry in self.contents.values()]}, "
                 f"Deleted: {[str(entry) for entry in self.deleted]})")
 
+    @property
+    def size(self):
+        return sum([entry.size for entry in self.contents.values()])
+
     def fromFolder(path_str: str) -> 'FolderEntry':
         """
         Creates a FolderEntry containing the complete structure of
@@ -41,7 +46,8 @@ class FolderEntry:
         new_folder = FolderEntry(path.parts[-1])
         for entry in os.scandir(path_str):
             if entry.is_file():
-                file = FileEntry(entry.name, entry.stat().st_mtime)
+                entry_stat = entry.stat()
+                file = FileEntry(entry.name, entry_stat.st_mtime, entry_stat.st_size)
                 new_folder.addFile(file)
             elif entry.is_dir() and entry.name not in ["$RECYCLE.BIN", "System Volume Information"]:
                 folder = FolderEntry.fromFolder(entry.path)
@@ -82,7 +88,7 @@ class FolderEntry:
 
         return delta_folder_entry
 
-    def processDelta(self, older_folder_entry: 'FolderEntry', source: str, destination: str):
+    def processDelta(self, older_folder_entry: 'FolderEntry', source: str, destination: str, bar=None):
         """
         Actually copy over the data on disk from source to destination.
         At the same time, move entries from this(the delta) entry to the older folder entry.
@@ -105,7 +111,7 @@ class FolderEntry:
                 new_folder_entry = FolderEntry(entry.name)
                 older_folder_entry.addFolder(new_folder_entry)
 
-                entry.processDelta(new_folder_entry, os.path.join(source, entry.name), current_dest_path)
+                entry.processDelta(new_folder_entry, os.path.join(source, entry.name), current_dest_path, bar)
 
                 self.contents.pop(entry.name)
             else:
@@ -120,6 +126,10 @@ class FolderEntry:
                     # (copy2 will put the read-only back when copying the stats)
                     os.chmod(os.path.join(current_dest_path, entry.name), stat.S_IWRITE)
                     shutil.copy2(file_src_path, current_dest_path)
+
+                # Update loading bar
+                if bar != None:
+                    bar(entry.size)
 
                 older_folder_entry.addFile(self.contents.pop(entry.name))
 
