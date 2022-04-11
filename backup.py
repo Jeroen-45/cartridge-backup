@@ -40,19 +40,19 @@ def backup(source: str, destination: str):
                 print("The copying was interrupted, the progress has been saved.")
                 exit()
             except Exception as e:
-                if e.errno != errno.ENOSPC:
-                    # Copying error, save backupdef, then re-raise error
-                    current_backupdef.saveToFile(backupdef_path)
-                    print("The copying was interrupted by an error. "
-                          "The progress has been saved, the details are below:")
-                    raise
-                else:
+                if e.errno == errno.ENOSPC:
                     # Disk full, save backupdef of files copied up to this point and ask for new destination
                     with bar.pause():
                         current_backupdef.saveToFile(backupdef_path)
                         dest_input = input(f"Cartridge full, insert next one and enter new path ({destination}): ")
                         if dest_input != "":
                             destination = dest_input
+                else:
+                    # Copying error, save backupdef, then re-raise error
+                    current_backupdef.saveToFile(backupdef_path)
+                    print("The copying was interrupted by an error. "
+                          "The progress has been saved, the details are below:")
+                    raise
 
     # Save backupdef of (presumably all) files copied up to this point
     current_backupdef.saveToFile(backupdef_path)

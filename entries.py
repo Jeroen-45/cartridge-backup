@@ -108,10 +108,12 @@ class FolderEntry:
         # Transfer additions/modifications
         for entry in list(self.contents.values()):
             if type(entry) == FolderEntry:
-                new_folder_entry = FolderEntry(entry.name)
-                older_folder_entry.addFolder(new_folder_entry)
+                if entry.name not in older_folder_entry.contents:
+                    older_folder_entry.addFolder(FolderEntry(entry.name))
 
-                entry.processDelta(new_folder_entry, os.path.join(source, entry.name), current_dest_path, bar)
+                entry.processDelta(older_folder_entry.contents[entry.name],
+                                   os.path.join(source, entry.name),
+                                   current_dest_path, bar)
 
                 self.contents.pop(entry.name)
             else:
@@ -127,11 +129,11 @@ class FolderEntry:
                     os.chmod(os.path.join(current_dest_path, entry.name), stat.S_IWRITE)
                     shutil.copy2(file_src_path, current_dest_path)
 
+                older_folder_entry.addFile(self.contents.pop(entry.name))
+
                 # Update loading bar
                 if bar != None:
                     bar(entry.size)
-
-                older_folder_entry.addFile(self.contents.pop(entry.name))
 
     def processDeletions(self, destination: str, dry_run: bool = True):
         """
