@@ -4,7 +4,8 @@ A very basic backup script that can be used to make incremental backups onto mul
 This script separately creates and stores an index of all file and folder names that are currently backed up, along with their creation/modification date. When another backup is made this file is checked to ensure only additions, modifications and deletions are copied as part of this later backup.
 
 ## Prerequisites
-Requires python >3.5
+- python >3.5
+- alive-progress (`pip install alive-progress`)
 
 ## Usage
 ### Backup
