@@ -48,11 +48,11 @@ def backup(source: str, destination: str):
                         if dest_input != "":
                             destination = dest_input
                 else:
-                    # Copying error, save backupdef, then re-raise error
+                    # Copying error, save backupdef, print exception message, continue copying next file
                     current_backupdef.saveToFile(backupdef_path)
-                    print("The copying was interrupted by an error. "
-                          "The progress has been saved, the details are below:")
-                    raise
+                    log.warning("The copying was interrupted by an error. "
+                                "The progress has been saved, the details are below:")
+                    log.warning(e)
 
     # Save backupdef of (presumably all) files copied up to this point
     current_backupdef.saveToFile(backupdef_path)

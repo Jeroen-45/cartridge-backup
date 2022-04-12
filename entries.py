@@ -117,6 +117,7 @@ class FolderEntry:
 
                 self.contents.pop(entry.name)
             else:
+                self.contents.pop(entry.name)
                 file_src_path = os.path.join(source, entry.name)
 
                 log.info(f"Copying {file_src_path} to {current_dest_path}")
@@ -129,7 +130,7 @@ class FolderEntry:
                     os.chmod(os.path.join(current_dest_path, entry.name), stat.S_IWRITE)
                     shutil.copy2(file_src_path, current_dest_path)
 
-                older_folder_entry.addFile(self.contents.pop(entry.name))
+                older_folder_entry.addFile(entry)
 
                 # Update loading bar
                 if bar != None:
