@@ -25,7 +25,9 @@ def backup(source: str, destination: str):
     delta_backupdef = BackupDef.delta(new_backupdef, current_backupdef)
 
     # Copy over files until the disk is filled up
-    with alive_bar(delta_backupdef.folder.size) as bar:
+    with alive_bar(delta_backupdef.folder.size,
+                   monitor="{count:,} / {total:,} bytes [{percent:.2%}]",
+                   stats="({rate:,.0f}b/s, eta: {eta}s)") as bar:
         while delta_backupdef.folder.contents or delta_backupdef.folder.deleted:
             # Before starting to copy over files, store the complete new backupdef to the destination.
             # This is both for fallback and for reserving space for the backupdef
