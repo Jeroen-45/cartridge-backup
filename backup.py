@@ -46,7 +46,7 @@ def backup(source: str, destination: str):
                     # Disk full, save backupdef of files copied up to this point and ask for new destination
                     with bar.pause():
                         current_backupdef.saveToFile(backupdef_path)
-                        dest_input = input(f"Cartridge full, insert next one and enter new path ({destination}): ")
+                        dest_input = input(f"\aCartridge full, insert next one and enter new path ({destination}): ")
                         if dest_input != "":
                             destination = dest_input
                 else:
