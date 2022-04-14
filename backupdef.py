@@ -1,4 +1,5 @@
 import pickle
+import os
 
 from entries import FolderEntry
 
@@ -15,6 +16,13 @@ class BackupDef:
         return len(pickle.dumps(self, protocol=pickle.HIGHEST_PROTOCOL))
 
     def saveToFile(self, path: str):
+        # Remove old backupdef file if it exists
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+        # Save backupdef to file
         with open(path, 'wb') as pkl_file:
             pickle.dump(self, pkl_file, protocol=pickle.HIGHEST_PROTOCOL)
 
