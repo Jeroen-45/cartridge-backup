@@ -16,7 +16,7 @@ python backup.py source_path destination_path
 You can use the `-v` flag for output on the current operations being performed.
 Once the current cartridge is full, you will be asked to insert and provide the path to the next one.
 
-If an exception occurs while copying a file, the current progress will be saved, so you can restart the backup and it will just be an incremental backup to the part that didn't fail.
+If an exception occurs while copying a file, the file will be skipped and won't be stored in the backup definition, so a future incremental backup(or a retry after the current one is complete) will try copying it again. Additionally, a warning will be logged when such an exception occurs.
 
 ### Restore
 To restore, simply start with the first cartridge and copy all the files back. For each next cartridge, copy and when duplicates occur, choose to only keep the most recent files.
