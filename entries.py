@@ -4,6 +4,7 @@ import logging as log
 from enum import Enum
 import shutil
 import stat
+import errno
 
 
 class EntryType(Enum):
@@ -129,6 +130,12 @@ class FolderEntry:
                     # (copy2 will put the read-only back when copying the stats)
                     os.chmod(os.path.join(current_dest_path, entry.name), stat.S_IWRITE)
                     shutil.copy2(file_src_path, current_dest_path)
+                except Exception as e:
+                    if e.errno == errno.ENOSPC:
+                        # Disk full, put entry back in delta
+                        self.addFile(entry)
+                    # Let the exception be handled by the caller
+                    raise
 
                 older_folder_entry.addFile(entry)
 
