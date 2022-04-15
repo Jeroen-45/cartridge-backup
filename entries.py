@@ -37,7 +37,7 @@ class FolderEntry:
     def size(self):
         return sum([entry.size for entry in self.contents.values()])
 
-    def fromFolder(path_str: str) -> 'FolderEntry':
+    def fromFolder(path_str: str, bar=None) -> 'FolderEntry':
         """
         Creates a FolderEntry containing the complete structure of
         actual folders and files present under the given path.
@@ -50,8 +50,10 @@ class FolderEntry:
                 entry_stat = entry.stat()
                 file = FileEntry(entry.name, entry_stat.st_mtime, entry_stat.st_size)
                 new_folder.addFile(file)
+                if bar != None:
+                    bar()
             elif entry.is_dir() and entry.name not in ["$RECYCLE.BIN", "System Volume Information"]:
-                folder = FolderEntry.fromFolder(entry.path)
+                folder = FolderEntry.fromFolder(entry.path, bar)
                 new_folder.addFolder(folder)
 
         return new_folder

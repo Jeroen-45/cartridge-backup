@@ -13,17 +13,23 @@ from util import sanitizeFilename
 
 
 def backup(source: str, destination: str):
-    folder = FolderEntry.fromFolder(source)
+    # Create current backup definition from source folder
+    print("Indexing current folder state...")
+    with alive_bar(monitor="{count} files", receipt=False) as bar:
+        folder = FolderEntry.fromFolder(source, bar)
     folder.name = sanitizeFilename(folder.name)
     new_backupdef = BackupDef(folder)
 
-    # Initialize backup defintions
+    # Initialize old backup definition
     backupdef_path = os.path.join(destination, f"{folder.name}.cbdef")
     if Path(backupdef_path).is_file():
+        print("Loading old backup definition...")
         current_backupdef = BackupDef.loadFromFile(backupdef_path)
     else:
         current_backupdef = BackupDef(FolderEntry(folder.name))
 
+    # Initialize delta backup definition
+    print("Creating delta backup definition...")
     delta_backupdef = BackupDef.delta(new_backupdef, current_backupdef)
 
     # Initialize disk space reservation
@@ -31,6 +37,7 @@ def backup(source: str, destination: str):
     reserver = DiskSpaceReserver(reserver_path, new_backupdef.fileSize * 3)
 
     # Copy over files until the disk is filled up
+    print("Copying files...")
     with alive_bar(delta_backupdef.folder.size,
                    monitor="{count:,} / {total:,} bytes [{percent:.2%}]",
                    stats="({rate:,.0f}b/s, eta: {eta}s)") as bar:
