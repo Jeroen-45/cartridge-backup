@@ -45,7 +45,19 @@ class FolderEntry:
         log.info(f"Indexing {path_str}")
         path = Path(path_str)
         new_folder = FolderEntry(path.parts[-1])
-        for entry in os.scandir(path_str):
+
+        # Get entries in path
+        try:
+            entries = os.scandir(path_str)
+        except Exception as e:
+            log.warning("The indexing was interrupted by an error. "
+                        f"The folder at {path_str} couldn't be indexed and has been skipped. "
+                        "The details on the error are below:")
+            log.warning(e)
+            return new_folder
+
+        # Add entries to this FolderEntry
+        for entry in entries:
             if entry.is_file(follow_symlinks=False):
                 entry_stat = entry.stat()
                 file = FileEntry(entry.name, entry_stat.st_mtime, entry_stat.st_size)
