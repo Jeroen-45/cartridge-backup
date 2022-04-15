@@ -46,13 +46,13 @@ class FolderEntry:
         path = Path(path_str)
         new_folder = FolderEntry(path.parts[-1])
         for entry in os.scandir(path_str):
-            if entry.is_file():
+            if entry.is_file(follow_symlinks=False):
                 entry_stat = entry.stat()
                 file = FileEntry(entry.name, entry_stat.st_mtime, entry_stat.st_size)
                 new_folder.addFile(file)
                 if bar != None:
                     bar()
-            elif entry.is_dir() and entry.name not in ["$RECYCLE.BIN", "System Volume Information"]:
+            elif entry.is_dir(follow_symlinks=False) and entry.name not in ["$RECYCLE.BIN", "System Volume Information"]:
                 folder = FolderEntry.fromFolder(entry.path, bar)
                 new_folder.addFolder(folder)
 
