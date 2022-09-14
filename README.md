@@ -15,6 +15,7 @@ python backup.py source_path destination_path
 ```
 You can use the `-v` flag for output on the current operations being performed.
 Once the current cartridge is full, you will be asked to insert and provide the path to the next one.
+If you are doing an incremental backup, the process is the same, but you start with the latest cartridge connected and set as the destination. The script will automatically detect the definition file already present on the disk and continue by doing an incremental backup compared to the contents of the current and *all* the previous cartridges.
 
 If an exception occurs while copying a file, the file will be skipped and won't be stored in the backup definition, so a future incremental backup(or a retry after the current one is complete) will try copying it again. Additionally, a warning will be logged when such an exception occurs.
 
